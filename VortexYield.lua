@@ -324,7 +324,7 @@ shade1 = {Color3.fromRGB(30, 20, 40)}
 shade2 = {Color3.fromRGB(55, 35, 70)}
 shade3 = {Color3.fromRGB(100, 50, 150)}
 text1 = {Color3.fromRGB(230, 210, 255)}
-text2 = {Color3.fromRGB(0, 0, 0,)}
+text2 = {Color3.fromRGB(0, 0, 0)}
 scroll = {Color3.fromRGB(120, 70, 180)}
 
 ScaledHolder.Name = randomString()
