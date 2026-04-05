@@ -100,6 +100,9 @@ end, function()
 	IsOnMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 end)
 isLegacyChat = TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService
+--[[rcdEnabled = select(2, pcall(function()
+    return gethidden(workspace, "RejectCharacterDeletions") ~= Enum.RejectCharacterDeletions.Disabled
+end)) or false]]
 
 -- xylex & europa
 local iyassets = {
@@ -351,7 +354,7 @@ Title.BorderSizePixel = 0
 Title.Size = UDim2.new(0, 250, 0, 20)
 Title.Font = Enum.Font.SourceSans
 Title.TextSize = 18
-Title.Text = "Vortex Yield v" .. currentVersion
+Title.Text = "Vortex Hub v1.0"
 
 do
 	local emoji = ({
@@ -762,7 +765,7 @@ Credits.Position = UDim2.new(0, 0, 0.9, 30)
 Credits.Size = UDim2.new(0, 250, 0, 20)
 Credits.Font = Enum.Font.SourceSansLight
 Credits.FontSize = Enum.FontSize.Size14
-Credits.Text = "Vortex Yield - By Godenot"
+Credits.Text = "Vortex Hub // Godenot"
 Credits.TextColor3 = Color3.new(1, 1, 1)
 Credits.ZIndex = 10
 
@@ -1119,7 +1122,7 @@ PopupText_2.BackgroundTransparency = 1
 PopupText_2.Size = UDim2.new(1, 0, 0.949999988, 0)
 PopupText_2.ZIndex = 10
 PopupText_2.Font = Enum.Font.SourceSans
-PopupText_2.Text = "Set Keybinds"
+PopupText_2.Text = "Vortex Hub - Keybinds"
 PopupText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
 PopupText_2.TextSize = 14.000
 PopupText_2.TextWrapped = true
@@ -2921,7 +2924,7 @@ currentScroll = Color3.fromRGB(78,78,79)
 
 defaultGuiScale = IsOnMobile and 0.9 or 1
 defaultsettings = {
-	prefix = ';';
+	prefix = '/';
 	StayOpen = false;
 	guiScale = defaultGuiScale;
 	espTransparency = 0.3;
@@ -3076,14 +3079,14 @@ function saves()
 					jsonAttempts = jsonAttempts + 1
 					warn("Save Json Error:", response)
 					warn("Overwriting Save File")
-					writefile("VortexYield.iy", defaults, true)
+					writefile("Vortex_Hub.iy", defaults, true)
 					wait()
 					saves()
 				end
 			else
 				writefile("IY_FE.iy", defaults, true)
 				wait()
-				local dReadSuccess, dOut = readfile("VortexYield.iy", true)
+				local dReadSuccess, dOut = readfile("IY_FE.iy", true)
 				if dReadSuccess and dOut ~= nil and tostring(dOut):gsub("%s", "") ~= "" then
 					saves()
 				else
@@ -4752,7 +4755,6 @@ CMDs[#CMDs + 1] = {NAME = 'reset', DESC = 'Resets your character normally'}
 CMDs[#CMDs + 1] = {NAME = 'respawn', DESC = 'Respawns you'}
 CMDs[#CMDs + 1] = {NAME = 'refresh / re', DESC = 'Respawns and brings you back to the same position'}
 CMDs[#CMDs + 1] = {NAME = 'god', DESC = 'Makes your character difficult to kill in most games'}
-CMDs[#CMDs + 1] = {NAME = 'permadeath', DESC = 'Makes you unable to respawn after death'}
 CMDs[#CMDs + 1] = {NAME = 'invisible / invis', DESC = 'Makes you invisible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'visible / vis', DESC = 'Makes you visible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'toolinvisible / toolinvis / tinvis', DESC = 'Makes you invisible to other players and able to use tools'}
@@ -4965,39 +4967,18 @@ function GetInTable(Table, Name)
 	return false
 end
 
-function permadeath(plr)
-	if replicatesignal then
-		replicatesignal(plr.ConnectDiedSignalBackend)
-		task.wait(Players.RespawnTime - 0.1)
-	end
-end
-
 function respawn(plr)
 	if invisRunning then TurnVisible() end
-
-	local rcdEnabled, wasHidden = false, false
-	if gethidden then
-		rcdEnabled, wasHidden = gethidden(workspace, "RejectCharacterDeletions") ~= Enum.RejectCharacterDeletions.Disabled
-	end
-
-	if rcdEnabled and replicatesignal then
-		replicatesignal(plr.ConnectDiedSignalBackend)
-		task.wait(Players.RespawnTime - 0.1)
-		replicatesignal(plr.Kill)
-	elseif rcdEnabled and not replicatesignal then
-		notify("Incompatible Exploit", "Your exploit does not support this command (missing replicatesignal)")
-	else
-		local char = plr.Character
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if hum then hum:ChangeState(Enum.HumanoidStateType.Dead) end
-		char:ClearAllChildren()
-		local newChar = Instance.new("Model")
-		newChar.Parent = workspace
-		plr.Character = newChar
-		task.wait()
-		plr.Character = char
-		newChar:Destroy()
-	end
+    local char = plr.Character
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    if hum then hum:ChangeState(Enum.HumanoidStateType.Dead) end
+    char:ClearAllChildren()
+    local newChar = Instance.new("Model")
+    newChar.Parent = workspace
+    plr.Character = newChar
+    task.wait()
+    plr.Character = char
+    newChar:Destroy()
 end
 
 local refreshCmd = false
@@ -8985,32 +8966,46 @@ addcmd('un2022materials',{'unuse2022materials'},function(args, speaker)
 	end
 end)
 
-addcmd('goto',{'to'},function(args, speaker)
-	local players = getPlayer(args[1], speaker)
-	for i,v in pairs(players)do
-		if Players[v].Character ~= nil then
-			if speaker.Character:FindFirstChildOfClass('Humanoid') and speaker.Character:FindFirstChildOfClass('Humanoid').SeatPart then
-				speaker.Character:FindFirstChildOfClass('Humanoid').Sit = false
-				wait(.1)
-			end
-			getRoot(speaker.Character).CFrame = getRoot(Players[v].Character).CFrame + Vector3.new(3,1,0)
-		end
-	end
-	execCmd('breakvelocity')
+addcmd("goto", {"to"}, function(args, speaker)
+    local character = speaker and speaker.Character
+    local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+    local players = getPlayer(args[1], speaker)
+    for _, v in pairs(players) do
+        if Players[v].Character ~= nil then
+            if humanoid and humanoid.SeatPart then
+                humanoid.Sit = false
+                task.wait(0.1)
+            end
+            getRoot(speaker.Character).CFrame = getRoot(Players[v].Character):GetPivot() + Vector3.new(3, 1, 0)
+        end
+    end
+    execCmd("breakvelocity")
 end)
 
-addcmd('tweengoto',{'tgoto','tto','tweento'},function(args, speaker)
-	local players = getPlayer(args[1], speaker)
-	for i,v in pairs(players)do
-		if Players[v].Character ~= nil then
-			if speaker.Character:FindFirstChildOfClass('Humanoid') and speaker.Character:FindFirstChildOfClass('Humanoid').SeatPart then
-				speaker.Character:FindFirstChildOfClass('Humanoid').Sit = false
-				wait(.1)
-			end
-			TweenService:Create(getRoot(speaker.Character), TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = getRoot(Players[v].Character).CFrame + Vector3.new(3,1,0)}):Play()
-		end
-	end
-	execCmd('breakvelocity')
+addcmd("tweengoto", {"tgoto", "tto", "tweento"}, function(args, speaker)
+    local character = speaker and speaker.Character
+    local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+    local oldState = humanoid and humanoid:GetStateEnabled(Enum.HumanoidStateType.Seated)
+    if humanoid then humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false) end
+
+    local players = getPlayer(args[1], speaker)
+    for _, v in pairs(players) do
+        if Players[v].Character ~= nil then
+            if humanoid and humanoid.SeatPart then
+                humanoid.Sit = false
+                task.wait(0.1)
+            end
+            TweenService:Create(getRoot(speaker.Character), TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {
+                CFrame = getRoot(Players[v].Character):GetPivot() + Vector3.new(3, 1, 0)
+            }):Play()
+        end
+    end
+    execCmd("breakvelocity")
+
+    if type(oldState) == "boolean" then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, oldState)
+    end
 end)
 
 addcmd('vehiclegoto',{'vgoto','vtp','vehicletp'},function(args, speaker)
@@ -9389,9 +9384,7 @@ end)
 
 addcmd("reset", {}, function(args, speaker)
 	local humanoid = speaker.Character and speaker.Character:FindFirstChildWhichIsA("Humanoid")
-	if replicatesignal then
-		replicatesignal(speaker.Kill)
-	elseif humanoid then
+	if humanoid then
 		humanoid:ChangeState(Enum.HumanoidStateType.Dead)
 	else
 		speaker.Character:BreakJoints()
@@ -9423,7 +9416,6 @@ addcmd("refresh", {"re"}, function(args, speaker)
 end)
 
 addcmd("god", {}, function(args, speaker)
-	permadeath(speaker)
 	local Cam = workspace.CurrentCamera
 	local Char, Pos = speaker.Character, Cam.CFrame
 	local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
@@ -10445,7 +10437,7 @@ end)
 
 addcmd("explorer", {"dex"}, function(args, speaker)
 	notify("Loading", "Hold on a sec")
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/josearlindodasilva07-svg/Vortex-Explorer/refs/heads/main/Vortex.lua"))()
 end)
 
 addcmd('olddex', {'odex'}, function(args, speaker)
@@ -12787,15 +12779,6 @@ addcmd("phonebook", {"call"}, function(args, speaker)
 		SocialService:PromptPhoneBook(speaker, "")
 	else
 		notify("Phonebook", "It seems you're not able to call anyone. Sorry!")
-	end
-end)
-
-addcmd("permadeath", {}, function(args, speaker)
-	if replicatesignal then
-		permadeath(speaker)
-		notify("Permadeath", "Enabled")
-	else
-		notify("Incompatible Exploit", "Your exploit does not support this command (missing replicatesignal)")
 	end
 end)
 
